@@ -1,4 +1,4 @@
 source 'https://rubygems.org'
 
-# Specify your gem's dependencies in kaminari.gemspec
+# Specify your gem's dependencies in cursor.gemspec
 gemspec

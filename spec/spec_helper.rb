@@ -9,7 +9,6 @@ end
 require 'bundler/setup'
 Bundler.require
 
-require 'capybara/rspec'
 require 'database_cleaner'
 
 # Simulate a gem providing a subclass of ActiveRecord::Base before the Railtie is loaded.
@@ -20,9 +19,7 @@ if defined? Rails
 
   require 'rspec/rails'
 end
-if defined? Sinatra
-  require 'spec_helper_for_sinatra'
-end
+require 'rspec/its'
 
 # Requires supporting files with custom matchers and macros, etc,
 # in ./support/ and its subdirectories.

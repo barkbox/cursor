@@ -1,18 +1,18 @@
 require 'spec_helper'
 
-describe Kaminari::Configuration do
-  subject { Kaminari.config }
+describe Cursor::Configuration do
+  subject { Cursor.config }
   describe 'default_per_page' do
     context 'by default' do
       its(:default_per_page) { should == 25 }
     end
     context 'configured via config block' do
       before do
-        Kaminari.configure {|c| c.default_per_page = 17}
+        Cursor.configure {|c| c.default_per_page = 17}
       end
       its(:default_per_page) { should == 17 }
       after do
-        Kaminari.configure {|c| c.default_per_page = 25}
+        Cursor.configure {|c| c.default_per_page = 25}
       end
     end
   end
@@ -23,69 +23,50 @@ describe Kaminari::Configuration do
     end
     context 'configure via config block' do
       before do
-        Kaminari.configure {|c| c.max_per_page = 100}
+        Cursor.configure {|c| c.max_per_page = 100}
       end
       its(:max_per_page) { should == 100 }
       after do
-        Kaminari.configure {|c| c.max_per_page = nil}
+        Cursor.configure {|c| c.max_per_page = nil}
       end
     end
   end
 
-  describe 'window' do
+  describe 'before_param_name' do
     context 'by default' do
-      its(:window) { should == 4 }
-    end
-  end
-
-  describe 'outer_window' do
-    context 'by default' do
-      its(:outer_window) { should == 0 }
-    end
-  end
-
-  describe 'left' do
-    context 'by default' do
-      its(:left) { should == 0 }
-    end
-  end
-
-  describe 'right' do
-    context 'by default' do
-      its(:right) { should == 0 }
-    end
-  end
-
-  describe 'param_name' do
-    context 'by default' do
-      its(:param_name) { should == :page }
+      its(:before_param_name) { should == :before }
     end
 
     context 'configured via config block' do
       before do
-        Kaminari.configure {|c| c.param_name = lambda { :test } }
+        Cursor.configure {|c| c.before_param_name = lambda { :test } }
       end
 
-      its(:param_name) { should == :test }
+      its(:before_param_name) { should == :test }
 
       after do
-        Kaminari.configure {|c| c.param_name = :page }
+        Cursor.configure {|c| c.before_param_name = :before }
       end
     end
   end
 
-  describe 'max_pages' do
+
+  describe 'after_param_name' do
     context 'by default' do
-      its(:max_pages) { should == nil }
+      its(:after_param_name) { should == :after }
     end
-    context 'configure via config block' do
+
+    context 'configured via config block' do
       before do
-        Kaminari.configure {|c| c.max_pages = 5}
+        Cursor.configure {|c| c.after_param_name = lambda { :test } }
       end
-      its(:max_pages) { should == 5 }
+
+      its(:after_param_name) { should == :test }
+
       after do
-        Kaminari.configure {|c| c.max_pages = nil}
+        Cursor.configure {|c| c.after_param_name = :after }
       end
     end
   end
+
 end

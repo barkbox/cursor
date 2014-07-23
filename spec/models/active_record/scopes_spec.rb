@@ -2,35 +2,41 @@ require 'spec_helper'
 
 if defined? ActiveRecord
 
-  describe Kaminari::ActiveRecordModelExtension do
+  describe Cursor::ActiveRecordModelExtension do
     before do
-      Kaminari.configure do |config|
-        config.page_method_name = :per_page_kaminari
+      Cursor.configure do |config|
+        config.page_method_name = :per_page_cursor
       end
       class Comment < ActiveRecord::Base; end
     end
 
     subject { Comment }
-    it { should respond_to(:per_page_kaminari) }
+    it { should respond_to(:per_page_cursor) }
     it { should_not respond_to(:page) }
 
     after do
-      Kaminari.configure do |config|
+      Cursor.configure do |config|
         config.page_method_name = :page
       end
     end
   end
 
-  shared_examples_for 'the first page' do
+  shared_examples_for 'the first after page' do
     it { should have(25).users }
     its('first.name') { should == 'user001' }
   end
+
+  shared_examples_for 'the first before page' do
+    it { should have(25).users }
+    its('first.name') { should == 'user100' }
+  end
+
 
   shared_examples_for 'blank page' do
     it { should have(0).users }
   end
 
-  describe Kaminari::ActiveRecordExtension do
+  describe Cursor::ActiveRecordExtension do
     before do
       1.upto(100) {|i| User.create! :name => "user#{'%03d' % i}", :age => (i / 10)}
       1.upto(100) {|i| GemDefinedModel.create! :name => "user#{'%03d' % i}", :age => (i / 10)}
@@ -40,221 +46,117 @@ if defined? ActiveRecord
     [User, Admin, GemDefinedModel, Device].each do |model_class|
       context "for #{model_class}" do
         describe '#page' do
-          context 'page 1' do
-            subject { model_class.page 1 }
-            it_should_behave_like 'the first page'
+          context 'page 1 after' do
+            subject { model_class.page(after: 0) }
+            it_should_behave_like 'the first after page'
           end
 
-          context 'page 2' do
-            subject { model_class.page 2 }
+          context 'page 1 before' do
+            subject { model_class.page(before: 101) }
+            it_should_behave_like 'the first before page'
+          end
+
+          context 'page 2 after' do
+            subject { model_class.page(after: 25) }
             it { should have(25).users }
             its('first.name') { should == 'user026' }
           end
 
+          context 'page 2 before' do
+            subject { model_class.page(before: 75) }
+            it { should have(25).users }
+            its('first.name') { should == 'user074' }
+          end
+
           context 'page without an argument' do
-            subject { model_class.page }
-            it_should_behave_like 'the first page'
+            subject { model_class.page() }
+            it_should_behave_like 'the first before page'
           end
 
-          context 'page < 1' do
-            subject { model_class.page 0 }
-            it_should_behave_like 'the first page'
+          context 'after page < -1' do
+            subject { model_class.page(after: -1) }
+            it_should_behave_like 'the first after page'
           end
 
-          context 'page > max page' do
-            subject { model_class.page 5 }
+          context 'after page > max page' do
+            subject { model_class.page(after: 1000) }
             it_should_behave_like 'blank page'
           end
 
+          context 'before page < 0' do
+            subject { model_class.page(before: 0) }
+            it_should_behave_like 'blank page'
+          end
+
+          context 'before page > max page' do
+            subject { model_class.page(before: 1000) }
+            it_should_behave_like 'the first before page'
+          end
+
+
           describe 'ensure #order_values is preserved' do
-            subject { model_class.order('id').page 1 }
-            its('order_values.uniq') { should == ['id'] }
+            subject { model_class.order('id').page() }
+            its('order_values.uniq') { should == ["#{model_class.table_name}.id desc"] }
           end
         end
 
         describe '#per' do
-          context 'page 1 per 5' do
-            subject { model_class.page(1).per(5) }
+          context 'default page per 5' do
+            subject { model_class.page.per(5) }
             it { should have(5).users }
-            its('first.name') { should == 'user001' }
+            its('first.name') { should == 'user100' }
           end
 
-          context "page 1 per nil (using default)" do
-            subject { model_class.page(1).per(nil) }
+          context "default page per nil (using default)" do
+            subject { model_class.page.per(nil) }
             it { should have(model_class.default_per_page).users }
           end
         end
 
-        describe '#padding' do
-          context 'page 1 per 5 padding 1' do
-            subject { model_class.page(1).per(5).padding(1) }
-            it { should have(5).users }
-            its('first.name') { should == 'user002' }
+        describe '#next_cursor' do
+
+          context 'after 1st page' do
+            subject { model_class.page(after: 0) }
+            its(:next_cursor) { should == 25 }
           end
 
-          context 'page 19 per 5 padding 5' do
-            subject { model_class.page(19).per(5).padding(5) }
-            its(:current_page) { should == 19 }
-            its(:total_pages) { should == 19 }
+          context 'after middle page' do
+            subject { model_class.page(after: 50) }
+            its(:next_cursor) { should == 75 }
           end
-        end
 
-        describe '#total_pages' do
-          context 'per 25 (default)' do
+          context 'before 1st page' do
             subject { model_class.page }
-            its(:total_pages) { should == 4 }
+            its(:next_cursor) { should == 76}
           end
 
-          context 'per 7' do
-            subject { model_class.page(2).per(7) }
-            its(:total_pages) { should == 15 }
+          context 'before middle page' do
+            subject { model_class.page(before: 50) }
+            its(:next_cursor) { should == 25}
           end
 
-          context 'per 65536' do
-            subject { model_class.page(50).per(65536) }
-            its(:total_pages) { should == 1 }
+        end
+
+        describe '#prev_cursor' do
+          context 'after 1st page' do
+            subject { model_class.page(after: 0) }
+            its(:prev_cursor) { should == 1}
           end
 
-          context 'per 0 (using default)' do
-            subject { model_class.page(50).per(0) }
-            its(:total_pages) { should == 4 }
+          context 'after middle page' do
+            subject { model_class.page(after: 50) }
+            its(:prev_cursor) { should == 51 }
           end
 
-          context 'per -1 (using default)' do
-            subject { model_class.page(5).per(-1) }
-            its(:total_pages) { should == 4 }
-          end
-
-          context 'per "String value that can not be converted into Number" (using default)' do
-            subject { model_class.page(5).per('aho') }
-            its(:total_pages) { should == 4 }
-          end
-
-          context 'with max_pages < total pages count from database' do
-            before { model_class.max_pages_per 3 }
+          context 'before 1st page' do
             subject { model_class.page }
-            its(:total_pages) { should == 3 }
-            after { model_class.max_pages_per nil }
+            its(:prev_cursor) { should == 100}
           end
 
-          context 'with max_pages > total pages count from database' do
-            before { model_class.max_pages_per 11 }
-            subject { model_class.page }
-            its(:total_pages) { should == 4 }
-            after { model_class.max_pages_per nil }
+          context 'before middle page' do
+            subject { model_class.page(before: 50) }
+            its(:prev_cursor) { should == 49}
           end
-
-          context 'with max_pages is nil' do
-            before { model_class.max_pages_per nil }
-            subject { model_class.page }
-            its(:total_pages) { should == 4 }
-          end
-
-          context "with per(nil) using default" do
-            subject { model_class.page.per(nil) }
-            its(:total_pages) { should == 4 }
-          end
-        end
-
-        describe '#current_page' do
-          context 'page 1' do
-            subject { model_class.page }
-            its(:current_page) { should == 1 }
-          end
-
-          context 'page 2' do
-            subject { model_class.page(2).per 3 }
-            its(:current_page) { should == 2 }
-          end
-        end
-
-        describe '#next_page' do
-          context 'page 1' do
-            subject { model_class.page }
-            its(:next_page) { should == 2 }
-          end
-
-          context 'page 5' do
-            subject { model_class.page(5) }
-            its(:next_page) { should be_nil }
-          end
-        end
-
-        describe '#prev_page' do
-          context 'page 1' do
-            subject { model_class.page }
-            its(:prev_page) { should be_nil }
-          end
-
-          context 'page 5' do
-            subject { model_class.page(5) }
-            its(:prev_page) { should == 4 }
-          end
-        end
-
-        describe '#first_page?' do
-          context 'on first page' do
-            subject { model_class.page(1).per(10) }
-            its(:first_page?) { should == true }
-          end
-
-          context 'not on first page' do
-            subject { model_class.page(5).per(10) }
-            its(:first_page?) { should == false }
-          end
-        end
-
-        describe '#last_page?' do
-          context 'on last page' do
-            subject { model_class.page(10).per(10) }
-            its(:last_page?) { should == true }
-          end
-
-          context 'not on last page' do
-            subject { model_class.page(1).per(10) }
-            its(:last_page?) { should == false }
-          end
-        end
-
-        describe '#out_of_range?' do
-          context 'on last page' do
-            subject { model_class.page(10).per(10) }
-            its(:out_of_range?) { should == false }
-          end
-
-          context 'within range' do
-            subject { model_class.page(1).per(10) }
-            its(:out_of_range?) { should == false }
-          end
-
-          context 'out of range' do
-            subject { model_class.page(11).per(10) }
-            its(:out_of_range?) { should == true }
-          end
-        end
-
-        describe '#count' do
-          context 'page 1' do
-            subject { model_class.page }
-            its(:count) { should == 25 }
-          end
-
-          context 'page 2' do
-            subject { model_class.page 2 }
-            its(:count) { should == 25 }
-          end
-        end
-
-        context 'chained with .group' do
-          subject { model_class.group('age').page(2).per 5 }
-          # 0..10
-          its(:total_count) { should == 11 }
-          its(:total_pages) { should == 3 }
-        end
-
-        context 'activerecord descendants' do
-          subject { ActiveRecord::Base.descendants }
-          its(:length) { should_not == 0 }
         end
       end
     end
