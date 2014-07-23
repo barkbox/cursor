@@ -10,7 +10,7 @@ module Cursor
       #   Model.page(after: 5)
       eval <<-RUBY
         def self.#{Cursor.config.page_method_name}(options={})
-          (options || {}).symbolize_keys!
+          (options || {}).to_hash.symbolize_keys!
           options[:direction] = options.keys.include?(:after) ? :after : :before
 
           on_cursor(options[options[:direction]], options[:direction]).
