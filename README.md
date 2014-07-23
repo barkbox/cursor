@@ -75,7 +75,7 @@ for a specific framework. To do so, you'll have to first make sure you have bund
 then you can run the specific test:
 ```
 BUNDLE_GEMFILE='gemfiles/active_record_40.gemfile' bundle install
-BUNDLE_GEMFILE='gemfiles/active_record_40.gemfile' bundle exec rspec ./spec/requests/users_spec.rb
+BUNDLE_GEMFILE='gemfiles/active_record_40.gemfile' bundle exec rspec
 ```
 
 
