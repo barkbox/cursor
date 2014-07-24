@@ -1,6 +1,7 @@
 module Cursor
   module ConfigurationMethods
     extend ActiveSupport::Concern
+
     module ClassMethods
       # Overrides the default +per_page+ value per model
       #   class Article < ActiveRecord::Base

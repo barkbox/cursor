@@ -25,12 +25,12 @@ module Cursor
         if cursor_id.nil?
           scoped
         else
-          where(["#{self.table_name}.id #{direction == :after ? '>' : '<'} ?", cursor_id])
+          where(["#{self.table_name}.id #{direction == Cursor.config.after_param_name ? '>' : '<'} ?", cursor_id])
         end
       end
 
       def self.in_direction direction
-        reorder("#{self.table_name}.id #{direction == :after ? 'asc' : 'desc'}")
+        reorder("#{self.table_name}.id #{direction == Cursor.config.after_param_name ? 'asc' : 'desc'}")
       end
     end
   end

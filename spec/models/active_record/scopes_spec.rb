@@ -36,6 +36,26 @@ if defined? ActiveRecord
     it { should have(0).users }
   end
 
+  shared_examples_for 'before pagination' do
+    it {
+      subject[:next_url].should include('before=76')
+      subject[:prev_url].should include('after=100')
+      subject[:next_url].should_not include('after')
+      subject[:prev_url].should_not include('before')
+    }
+  end
+
+  shared_examples_for 'after pagination' do
+    it {
+      subject[:next_url].should include('after=25')
+      subject[:prev_url].should include('before=1')
+      subject[:next_url].should_not include('before')
+      subject[:prev_url].should_not include('after')
+    }
+  end
+
+
+
   describe Cursor::ActiveRecordExtension do
     before do
       1.upto(100) {|i| User.create! :name => "user#{'%03d' % i}", :age => (i / 10)}
@@ -157,6 +177,41 @@ if defined? ActiveRecord
             subject { model_class.page(before: 50) }
             its(:prev_cursor) { should == 49}
           end
+        end 
+
+        describe '#pagination' do
+          context 'before' do
+            subject { model_class.page.pagination('http://example.com', {}) }
+            it_should_behave_like 'before pagination'
+          end
+
+
+          context 'after' do
+            subject { model_class.page(after: 0).pagination('http://example.com', {}) }
+            it_should_behave_like 'after pagination'
+          end
+
+          context 'before with existing before query param' do
+            subject { model_class.page(before: 101).pagination('http://example.com', {before: 10}) }
+            it_should_behave_like 'before pagination'
+          end
+
+          context 'before with existing after query param' do
+            subject { model_class.page(before: 101).pagination('http://example.com', {after: 10}) }
+            it_should_behave_like 'before pagination'
+          end
+
+          context 'after with existing after query param' do
+            subject { model_class.page(after: 0).pagination('http://example.com', {after: 10}) }
+            it_should_behave_like 'after pagination'
+          end
+
+          context 'after with existing before query param' do
+            subject { model_class.page(after: 0).pagination('http://example.com', {before: 10}) }
+            it_should_behave_like 'after pagination'
+          end
+
+
         end
       end
     end
