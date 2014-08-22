@@ -41,6 +41,9 @@ module Cursor
       "#{request_url}?#{query_params.merge(Cursor.config.after_param_name => cursor).to_query}"
     end
 
+    def url_parts request_url
+    end
+
     def direction
       @_direction ||= prev_cursor < next_cursor ? :after : :before
     end

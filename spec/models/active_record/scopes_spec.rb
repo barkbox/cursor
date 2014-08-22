@@ -38,19 +38,23 @@ if defined? ActiveRecord
 
   shared_examples_for 'before pagination' do
     it {
-      subject[:next_url].should include('before=76')
-      subject[:prev_url].should include('after=100')
-      subject[:next_url].should_not include('after')
-      subject[:prev_url].should_not include('before')
+      expect(subject[:next_url]).to include('before=76')
+      expect(subject[:prev_url]).to include('after=100')
+      expect(subject[:next_url].count('after')/'after'.length).to eq(1)
+      expect(subject[:prev_url].count('before')/'before'.length).to eq(1)
+      expect(subject[:next_url]).to_not include('after')
+      expect(subject[:prev_url]).to_not include('before')
     }
   end
 
   shared_examples_for 'after pagination' do
     it {
-      subject[:next_url].should include('after=25')
-      subject[:prev_url].should include('before=1')
-      subject[:next_url].should_not include('before')
-      subject[:prev_url].should_not include('after')
+      expect(subject[:next_url]).to include('after=25')
+      expect(subject[:prev_url]).to include('before=1')
+      expect(subject[:next_url].count('after')/'after'.length).to eq(1)
+      expect(subject[:prev_url].count('before')/'before'.length).to eq(1)
+      expect(subject[:next_url]).to_not include('before')
+      expect(subject[:prev_url]).to_not include('after')
     }
   end
 
