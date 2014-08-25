@@ -40,8 +40,8 @@ if defined? ActiveRecord
     it {
       expect(subject[:next_url]).to include('before=76')
       expect(subject[:prev_url]).to include('after=100')
-      expect(subject[:next_url].count('after')/'after'.length).to eq(1)
-      expect(subject[:prev_url].count('before')/'before'.length).to eq(1)
+      expect(subject[:prev_url].scan('after').length).to eq(1)
+      expect(subject[:next_url].scan('before').length).to eq(1)
       expect(subject[:next_url]).to_not include('after')
       expect(subject[:prev_url]).to_not include('before')
     }
@@ -51,13 +51,31 @@ if defined? ActiveRecord
     it {
       expect(subject[:next_url]).to include('after=25')
       expect(subject[:prev_url]).to include('before=1')
-      expect(subject[:next_url].count('after')/'after'.length).to eq(1)
-      expect(subject[:prev_url].count('before')/'before'.length).to eq(1)
+      expect(subject[:next_url].scan('after').length).to eq(1)
+      expect(subject[:prev_url].scan('before').length).to eq(1)
       expect(subject[:next_url]).to_not include('before')
       expect(subject[:prev_url]).to_not include('after')
     }
   end
 
+
+  describe Cursor::ActiveRecordExtension do
+    it 'returns no after cursor when there are no records' do
+      params = User.page(after: 0).pagination('http://example.com')
+      expect(params.has_key?(:next_url)).to be_false
+      expect(params.has_key?(:prev_url)).to be_false
+      expect(params[:next_cursor]).to be_nil
+      expect(params[:prev_cursor]).to be_nil
+    end
+
+    it 'returns no before cursor when there are no records' do
+      params = User.page(before: 0).pagination('http://example.com')
+      expect(params.has_key?(:next_url)).to be_false
+      expect(params.has_key?(:prev_url)).to be_false
+      expect(params[:next_cursor]).to be_nil
+      expect(params[:prev_cursor]).to be_nil
+    end
+  end
 
 
   describe Cursor::ActiveRecordExtension do
@@ -185,33 +203,33 @@ if defined? ActiveRecord
 
         describe '#pagination' do
           context 'before' do
-            subject { model_class.page.pagination('http://example.com', {}) }
+            subject { model_class.page.pagination('http://example.com') }
             it_should_behave_like 'before pagination'
           end
 
 
           context 'after' do
-            subject { model_class.page(after: 0).pagination('http://example.com', {}) }
+            subject { model_class.page(after: 0).pagination('http://example.com') }
             it_should_behave_like 'after pagination'
           end
 
           context 'before with existing before query param' do
-            subject { model_class.page(before: 101).pagination('http://example.com', {before: 10}) }
+            subject { model_class.page(before: 101).pagination('http://example.com?before=10') }
             it_should_behave_like 'before pagination'
           end
 
           context 'before with existing after query param' do
-            subject { model_class.page(before: 101).pagination('http://example.com', {after: 10}) }
+            subject { model_class.page(before: 101).pagination('http://example.com?after=10') }
             it_should_behave_like 'before pagination'
           end
 
           context 'after with existing after query param' do
-            subject { model_class.page(after: 0).pagination('http://example.com', {after: 10}) }
+            subject { model_class.page(after: 0).pagination('http://example.com?after=10') }
             it_should_behave_like 'after pagination'
           end
 
           context 'after with existing before query param' do
-            subject { model_class.page(after: 0).pagination('http://example.com', {before: 10}) }
+            subject { model_class.page(after: 0).pagination('http://example.com?before=10') }
             it_should_behave_like 'after pagination'
           end
 
