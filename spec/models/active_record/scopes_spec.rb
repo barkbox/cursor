@@ -207,7 +207,6 @@ if defined? ActiveRecord
             it_should_behave_like 'before pagination'
           end
 
-
           context 'after' do
             subject { model_class.page(after: 0).pagination('http://example.com') }
             it_should_behave_like 'after pagination'
@@ -233,6 +232,11 @@ if defined? ActiveRecord
             it_should_behave_like 'after pagination'
           end
 
+          context 'before with query params' do
+            subject { model_class.page.pagination('http://example.com?a[]=one&a[]=two') }
+            it_should_behave_like 'before pagination'
+            specify { expect(subject[:next_url]).to include('a[]=one&a[]=two') }
+          end
 
         end
       end

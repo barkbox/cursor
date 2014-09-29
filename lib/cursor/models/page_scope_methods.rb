@@ -36,18 +36,18 @@ module Cursor
     def before_url request_url, cursor
       base, params = url_parts(request_url)
       params.merge!(Cursor.config.before_param_name.to_s => cursor) unless cursor.nil?
-      params.to_query.length > 0 ? "#{base}?#{params.to_query}" : base
+      params.to_query.length > 0 ? "#{base}?#{CGI.unescape(params.to_query)}" : base
     end
 
     def after_url request_url, cursor
       base, params = url_parts(request_url)
       params.merge!(Cursor.config.after_param_name.to_s => cursor) unless cursor.nil?
-      params.to_query.length > 0 ? "#{base}?#{params.to_query}" : base
+      params.to_query.length > 0 ? "#{base}?#{CGI.unescape(params.to_query)}" : base
     end
 
     def url_parts request_url
-      base = request_url.split('?')[0]
-      params = CGI.parse(request_url.split('?')[1] || '')
+      base, params = request_url.split('?', 2)
+      params = Rack::Utils.parse_nested_query(params || '')
       params.stringify_keys!
       params.delete('before')
       params.delete('after')
