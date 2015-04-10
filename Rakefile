@@ -13,15 +13,15 @@ end
 task default: "spec:all"
 
 namespace :spec do
-  mappers = %w(
-    active_record_edge
-    active_record_42
-    active_record_41
-    active_record_40
-    active_record_32
-  )
+  mappers = [
+    ['2.2.1', 'active_record_edge'],
+    ['2.1.2', 'active_record_42'],
+    ['2.1.2', 'active_record_41'],
+    ['2.1.2', 'active_record_40'],
+    ['1.9.3-p551', 'active_record_32']
+  ]
 
-  mappers.each do |gemfile|
+  mappers.each do |ruby, gemfile|
     desc "Run Tests against #{gemfile}"
     task gemfile do
       sh "BUNDLE_GEMFILE='gemfiles/#{gemfile}.gemfile' bundle --quiet"
@@ -31,9 +31,21 @@ namespace :spec do
 
   desc "Run Tests against all ORMs"
   task :all do
-    mappers.each do |gemfile|
-      sh "BUNDLE_GEMFILE='gemfiles/#{gemfile}.gemfile' bundle --quiet"
-      sh "BUNDLE_GEMFILE='gemfiles/#{gemfile}.gemfile' bundle exec rake spec"
+    mappers.each do |ruby, gemfile|
+      sh %Q{
+if hash rvm 2>/dev/null 
+then
+  echo "Using #{ruby} with RVM"
+  rvm use #{ruby}
+fi
+if hash rbenv 2>/dev/null 
+then
+  echo "Using #{ruby} with RBENV"
+  rbenv local #{ruby}
+fi
+BUNDLE_GEMFILE='gemfiles/#{gemfile}.gemfile' bundle --quiet
+BUNDLE_GEMFILE='gemfiles/#{gemfile}.gemfile' bundle exec rake spec
+      }
     end
   end
 end
