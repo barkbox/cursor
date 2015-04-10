@@ -23,7 +23,7 @@ module Cursor
 
       def self.on_cursor cursor_id, direction
         if cursor_id.nil?
-          scoped
+          where(nil)
         else
           where(["#{self.table_name}.id #{direction == Cursor.config.after_param_name ? '>' : '<'} ?", cursor_id])
         end

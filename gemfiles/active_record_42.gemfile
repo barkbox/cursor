@@ -1,14 +1,8 @@
 source 'https://rubygems.org'
 
-gem 'railties', '~> 3.1.12'
-gem 'activerecord', '~> 3.1.12', :require => 'active_record'
+gem 'railties', '~> 4.2.0'
+gem 'activerecord', '~> 4.2.0', :require => 'active_record'
 gem 'rspec-rails', '~> 2.14.1'
-
-# stick to versions that work under Ruby 1.8 for now
-gem 'capybara', '< 2.1'
-gem 'nokogiri', '< 1.6'
-gem 'rubyzip', '< 1'
-gem 'mime-types', '< 2'
 
 platforms :ruby do
   if RUBY_VERSION > "2.1.0"
@@ -23,7 +17,7 @@ end
 platforms :rbx do
   gem 'rubysl', '~> 2.0'
   gem 'racc'
-  gem 'rubysl-test-unit'
+  gem 'minitest'
   gem 'rubinius-developer_tools'
 end
 

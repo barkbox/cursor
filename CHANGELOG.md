@@ -1,3 +1,8 @@
+# 0.1.2
+
+* added support for ActiveRecord version 4.2
+* removed support for ActiveRecord versions 3.0 and 3.1
+
 # 0.1.0
 
 * cloned kaminari
