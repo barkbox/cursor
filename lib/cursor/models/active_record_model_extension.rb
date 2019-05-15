@@ -1,10 +1,9 @@
-
 module Cursor
   module ActiveRecordModelExtension
     extend ActiveSupport::Concern
 
     included do
-      self.send(:include, Cursor::ConfigurationMethods)
+      include Cursor::ConfigurationMethods
 
       # Fetch the values at the specified page edge
       #   Model.page(after: 5)
